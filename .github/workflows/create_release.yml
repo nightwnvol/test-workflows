@@ -6,6 +6,7 @@ on:
       - main
 jobs:
   create-release:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,6 +29,6 @@ jobs:
             echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
             exit 1
           else
-            gh release create "$TAG" --title "$TAG" --generate-notes
+            gh release create "$TAG" --title "$TAG" --generate-notes --latest
             echo "Release with tag $TAG created."
           fi
