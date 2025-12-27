@@ -31,4 +31,4 @@ jobs:
             --base develop \
             --head main \
             --title "maint: sync develop with main after release ${VERSION}" \
-            --body "This PR synchronizes the develop branch with main after the release of version ${VERSION}.
+            --body "This PR synchronizes the develop branch with main after the release of version ${VERSION}."
