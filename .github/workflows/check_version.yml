@@ -1,0 +1,28 @@
+name: Version Check
+on:
+  push:
+    branches:
+      - 'release/**'
+jobs:
+  check-version:
+    if: contains(github.event.head_commit.message, '(check-version)')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+      - name: Check if tag exists
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=${{ steps.get_version.outputs.TAG }}
+          if gh release view $TAG > /dev/null 2>&1; then
+            echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
+            exit 1
+          else
+            echo "Tag $TAG is available. Ready to merge."
+          fi
