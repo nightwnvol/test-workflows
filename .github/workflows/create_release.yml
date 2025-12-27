@@ -21,7 +21,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="v${{ steps.pkg_version.outputs.VERSION }}"
+          TAG="v${{ steps.get_version.outputs.VERSION }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
             exit 1
