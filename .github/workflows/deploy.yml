@@ -8,6 +8,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - name: Deploy
         run: |
+          echo "Deploying version ${{ github.event.release.tag_name }}"
           echo "Deployed"
