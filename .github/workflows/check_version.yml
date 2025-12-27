@@ -14,12 +14,12 @@ jobs:
         id: get_version
         run: |
           VERSION=$(jq -r .version package.json)
-          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
       - name: Check if tag exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG=${{ steps.get_version.outputs.TAG }}
+          TAG="v${{ steps.get_version.outputs.VERSION }}"
           if gh release view $TAG > /dev/null 2>&1; then
             echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
             exit 1
