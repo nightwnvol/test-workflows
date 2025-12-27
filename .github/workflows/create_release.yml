@@ -29,6 +29,6 @@ jobs:
             echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
             exit 1
           else
-            gh release create "$TAG" --title "$TAG" --generate-notes --latest
+            gh release create "$TAG" --title "$TAG" --generate-notes --latest --target main
             echo "Release with tag $TAG created."
           fi
