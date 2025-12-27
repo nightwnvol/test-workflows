@@ -1,0 +1,54 @@
+name: Release and Deploy
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
+      tag: ${{ steps.create_tag.outputs.TAG }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Create release
+        id: create_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.get_version.outputs.VERSION }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release with tag $TAG already exists. Please bump the version!"
+            exit 1
+          fi
+          gh release create "$TAG" --title "$TAG" --generate-notes --latest --target main
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "Release $TAG created."
+  
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+      
+      - name: Deploy
+        run: |
+          echo "Deploying version ${{ needs.release.outputs.version }}"
+          echo "Deployed successfully!"
