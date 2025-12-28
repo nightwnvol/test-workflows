@@ -1,9 +1,9 @@
-name: Version Check
+name: Check GitHub release
 on:
-  pull_request:
+  pull_request: # opened, synchronize, reopened
     branches: [main]
 jobs:
-  check-version:
+  check-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -13,7 +13,9 @@ jobs:
         run: |
           VERSION=$(jq -r .version package.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-      - name: Check if tag exists
+          # alternative:
+          # VERSION=$(npm pkg get version | tr -d '"')
+      - name: Check if GitHub release exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
