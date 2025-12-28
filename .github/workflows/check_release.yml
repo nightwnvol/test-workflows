@@ -24,7 +24,7 @@ jobs:
           # VERSION=$(npm pkg get version | tr -d '"')
       - name: Check existing releases
         id: check-release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: releases } = await github.rest.repos.listReleases({
