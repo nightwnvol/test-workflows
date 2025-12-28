@@ -35,21 +35,26 @@ module.exports = async ({ github, context, core }) => {
 
   if (botComment) {
     // Update existing comment
-    await github.rest.issues.updateComment({
+    // await github.rest.issues.updateComment({
+    //   owner: context.repo.owner,
+    //   repo: context.repo.repo,
+    //   comment_id: botComment.id,
+    //   body: message,
+    // });
+    // Delete existing comment
+    await github.rest.issues.deleteComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       comment_id: botComment.id,
-      body: message,
-    });
-  } else {
-    // Create new comment
-    await github.rest.issues.createComment({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: context.issue.number,
-      body: message,
     });
   }
+  // Create new comment
+  await github.rest.issues.createComment({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    issue_number: context.issue.number,
+    body: message,
+  });
 
   // Fail if the release already exists
   if (exists) {
