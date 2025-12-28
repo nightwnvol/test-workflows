@@ -34,13 +34,6 @@ module.exports = async ({ github, context, core }) => {
             `;
 
   if (botComment) {
-    // Update existing comment
-    // await github.rest.issues.updateComment({
-    //   owner: context.repo.owner,
-    //   repo: context.repo.repo,
-    //   comment_id: botComment.id,
-    //   body: message,
-    // });
     // Delete existing comment
     await github.rest.issues.deleteComment({
       owner: context.repo.owner,
