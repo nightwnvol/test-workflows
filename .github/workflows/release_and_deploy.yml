@@ -31,6 +31,7 @@ jobs:
         id: create-release
         env:
           TAG: ${{ steps.get-version.outputs.TAG }}
+          COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         uses: actions/github-script@v8
         with:
           script: |
