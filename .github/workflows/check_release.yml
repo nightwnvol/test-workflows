@@ -5,6 +5,9 @@ on:
 jobs:
   check-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,7 +20,7 @@ jobs:
           # VERSION=$(npm pkg get version | tr -d '"')
       - name: Check if GitHub release exists
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           TAG="v${{ steps.get_version.outputs.VERSION }}"
           PR_NUMBER="${{ github.event.pull_request.number }}"
