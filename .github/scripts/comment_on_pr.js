@@ -1,6 +1,6 @@
 module.exports = async ({ github, context, core }) => {
-  const version = "${{ steps.get-version.outputs.VERSION }}";
-  const exists = "${{ steps.check-release.outputs.result }}" === "true";
+  const version = process.env.VERSION;
+  const exists = process.env.EXISTS === "true";
 
   // Search for existing bot comment
   const { data: comments } = await github.rest.issues.listComments({
