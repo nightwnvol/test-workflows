@@ -1,0 +1,44 @@
+name: Check GitHub release
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    # if:startsWith(github.head_ref, 'release/')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Get package.json version
+        id: get-version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # alternative:
+          # VERSION=$(npm pkg get version | tr -d '"')
+      - name: Check existing releases
+        id: check-release
+        uses: actions/github-script@v8
+        env:
+          VERSION: ${{ steps.get-version.outputs.VERSION }}
+        with:
+          script: |
+            const script = require('./.github/scripts/check_release.js');
+            return await script({github, context, core});
+          result-encoding: string
+
+      - name: Comment on PR
+        uses: actions/github-script@v8
+        env:
+          VERSION: ${{ steps.get-version.outputs.VERSION }}
+          EXISTS: ${{ steps.check-release.outputs.result }}
+        with:
+          script: |
+            const script = require('./.github/scripts/comment_on_pr.js');
+            await script({github, context, core});
