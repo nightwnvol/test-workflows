@@ -1,46 +1,94 @@
 name: Check GitHub release
 on:
-  pull_request: # opened, synchronize, reopened
+  pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]
 jobs:
-  check-release:
+  check-version:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+    # if:startsWith(github.head_ref, 'release/')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Get version from package.json
-        id: get_version
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Get package.json version
+        id: get-version
         run: |
           VERSION=$(jq -r .version package.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           # alternative:
           # VERSION=$(npm pkg get version | tr -d '"')
-      - name: Check if GitHub release exists
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          TAG="v${{ steps.get_version.outputs.VERSION }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          MARKER="<!-- release-check-comment -->"
-          EXISTING_COMMENT=$(gh pr view "$PR_NUMBER" --json comments --jq ".comments[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1)
-          # if gh release view "$TAG" > /dev/null 2>&1; then
-          #   COMMENT_BODY="$MARKER❌ **Release Check Failed**Release with tag \`$TAG\` already exists on GitHub. Please bump the version in package.json before merging!"
-          #   if [ -n "$EXISTING_COMMENT" ]; then
-          #     gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT" -f body="$COMMENT_BODY"
-          #   else
-          #     gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
-          #   fi            
-          #   echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
-          #   exit 1
-          # else
-          #   COMMENT_BODY="$MARKER✅ **Release Check Passed**Tag \`$TAG\` is available. This PR is ready to merge."
-          #   if [ -n "$EXISTING_COMMENT" ]; then
-          #     gh api --method PATCH -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "/repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT" -f body="$COMMENT_BODY"
-          #   else
-          #     gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
-          #   fi
-          #   echo "Tag $TAG is available. Ready to merge."
-          # fi
+      - name: Check existing releases
+        id: check-release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            const currentVersion = '${{ steps.get-version.outputs.VERSION }}';
+            const existingRelease = releases.find(r => r.tag_name === `v${currentVersion}` || r.tag_name === currentVersion);
+
+            return existingRelease ? true : false;
+          result-encoding: string
+
+      - name: Comment on PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = '${{ steps.get-version.outputs.VERSION }}';
+            const exists = '${{ steps.check-release.outputs.result }}' === 'true';
+
+            // Cerca commenti esistenti del bot
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('## Release Version Check')
+            );
+
+            const message = `
+            ## Release Version Check
+
+            **Version in package.json:** \`${version}\`
+
+            ${exists ? 
+              '❌ **ERROR:** A release with this version already exists on GitHub!' :
+              '✅ **SUCCESS:** This version is available for release.'
+            }
+
+            ${exists ? 
+              '**Action required:** Please update the version in package.json before merging.' :
+              'You can safely merge this release.'
+            }
+            `;
+
+            if (botComment) {
+              // Aggiorna commento esistente
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: message
+              });
+            } else {
+              // Crea nuovo commento
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+            }
+
+            // Fallisce se la release esiste già
+            if (exists) {
+              core.setFailed(`Version ${version} already exists in releases`);
+            }
