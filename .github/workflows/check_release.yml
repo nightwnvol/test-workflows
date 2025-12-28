@@ -27,7 +27,7 @@ jobs:
           MARKER="<!-- release-check-comment -->"
           EXISTING_COMMENT=$(gh pr view "$PR_NUMBER" --json comments --jq ".comments[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1)
           if gh release view "$TAG" > /dev/null 2>&1; then
-            COMMENT_BODY="$MARKER<br>❌ **Release Check Failed**<br>Release with tag \`$TAG\` already exists on GitHub. Please bump the version in package.json before merging!"
+            COMMENT_BODY="$MARKER❌ **Release Check Failed**<br>Release with tag \`$TAG\` already exists on GitHub. Please bump the version in package.json before merging!"
             if [ -n "$EXISTING_COMMENT" ]; then
               gh api -X PATCH "/repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT" -f body="$COMMENT_BODY"
             else
@@ -36,7 +36,7 @@ jobs:
             echo "::error::Release with tag $TAG already exists on GitHub. Please bump the version in package.json!"
             exit 1
           else
-            COMMENT_BODY="$MARKER<br>✅ **Release Check Passed**<br>Tag \`$TAG\` is available. This PR is ready to merge."
+            COMMENT_BODY="$MARKER✅ **Release Check Passed**<br>Tag \`$TAG\` is available. This PR is ready to merge."
             if [ -n "$EXISTING_COMMENT" ]; then
               gh api -X PATCH "/repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT" -f body="$COMMENT_BODY"
             else
