@@ -4,6 +4,7 @@ module.exports = async ({ github, context, core }) => {
     repo: context.repo.repo,
     tag_name: process.env.TAG,
     name: process.env.TAG,
+    target_commitish: process.env.COMMIT_SHA,
     generate_release_notes: true,
   });
 };
