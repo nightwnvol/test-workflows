@@ -63,5 +63,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./.github/scripts/sync_back.js');
-            await script({github, context, core});
+            const { default: sync_back } = await import('./.github/scripts/sync_back.js');
+            await sync_back({github, context, core});
+            # const script = require('./.github/scripts/sync_back.js');
+            # await script({github, context, core});
