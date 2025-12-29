@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-version.outputs.VERSION }}
-      tag: ${{ steps.create-release.outputs.TAG }}
+      tag: ${{ steps.get-version.outputs.TAG }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,3 +49,19 @@ jobs:
         run: |
           echo "Deploying version ${{ needs.create-release.outputs.version }}"
           echo "Deployed successfully!"
+  sync-back:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+      - name: Sync develop branch with main
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const script = require('./.github/scripts/sync_back.js');
+            await script({github, context, core});
