@@ -1,4 +1,4 @@
-module.exports = async ({ github, context, core }) => {
+export default async ({ github, context, core }) => {
   await github.rest.repos.createRelease({
     owner: context.repo.owner,
     repo: context.repo.repo,

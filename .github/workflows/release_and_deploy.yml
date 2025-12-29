@@ -35,8 +35,9 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const script = require('./.github/scripts/create_release.js');
-            await script({github, context, core});
+            // ES module syntax
+            const { default: create_release } = await import('${{ github.workspace }}/.github/scripts/create_release.mjs');
+            await create_release({github, context, core});
   deploy:
     needs: create-release
     runs-on: ubuntu-latest
