@@ -63,5 +63,5 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const { default: sync_back } = await import('${{ github.workspace }}/.github/scripts/sync_back.js');
+            const { default: sync_back } = await import('${{ github.workspace }}/.github/scripts/sync_back.mjs');
             await sync_back({github, context, core});
