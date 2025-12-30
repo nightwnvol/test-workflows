@@ -1,4 +1,4 @@
-name: Release and Deploy
+name: Release and deploy to production
 on:
   pull_request:
     types: [closed]
@@ -38,7 +38,7 @@ jobs:
             // ES module syntax
             const { default: create_release } = await import('${{ github.workspace }}/.github/scripts/create_release.mjs');
             await create_release({github, context, core});
-  deploy:
+  deploy-production:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
@@ -46,9 +46,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.create-release.outputs.tag }}
-      - name: Deploy
+      - name: Deploy to production
         run: |
-          echo "Deploying version ${{ needs.create-release.outputs.version }}"
+          echo "Deploying version ${{ needs.create-release.outputs.version }} to production"
           echo "Deployed successfully!"
   sync-back:
     needs: create-release
