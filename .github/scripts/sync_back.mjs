@@ -1,13 +1,11 @@
 export default async ({ github, context, core }) => {
-  const owner = context.repo.owner;
-  const repo = context.repo.repo;
   const version = process.env.VERSION;
 
   try {
     // Create a PR to sync develop with main
     const { data: pr } = await github.rest.pulls.create({
-      owner,
-      repo,
+      owner: context.repo.owner,
+      repo: context.repo.repo,
       title: `maint: sync develop with main after release ${version}`,
       head: "main",
       base: "develop",

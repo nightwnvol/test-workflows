@@ -1,0 +1,29 @@
+name: Deploy to preview
+on:
+  push:
+    branches:
+      - "release/**"
+jobs:
+  deploy-preview:
+    if: contains(github.event.head_commit.message, '(deploy-preview)')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Deploy to preview
+        run: |
+          echo "Deploying to preview environment for ref ${{ github.ref }}"
+          echo "Deployed successfully!"
+  check-deploy-preview:
+    needs: deploy-preview
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify deployment status
+        run: |
+          if [ "${{ needs.deploy-preview.result }}" != "success" ]; then
+            echo "::error::Preview deployment failed or skipped."
+            exit 1
+          fi

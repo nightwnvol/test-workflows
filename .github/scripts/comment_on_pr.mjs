@@ -1,4 +1,4 @@
-module.exports = async ({ github, context, core }) => {
+export default async ({ github, context, core }) => {
   const version = process.env.VERSION;
   const exists = process.env.EXISTS === "true";
 

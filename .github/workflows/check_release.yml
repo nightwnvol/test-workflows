@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened, edited]
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: write # TODO: need this?
 jobs:
   check-release:
     runs-on: ubuntu-latest
@@ -29,10 +29,10 @@ jobs:
           VERSION: ${{ steps.get-version.outputs.VERSION }}
         with:
           script: |
-            const script = require('./.github/scripts/check_release.js');
-            return await script({github, context, core});
+            // ES module syntax
+            const { default: check_release } = await import('${{ github.workspace }}/.github/scripts/check_release.mjs');
+            return await check_release({github, context, core});
           result-encoding: string
-
       - name: Comment on PR
         uses: actions/github-script@v8
         env:
@@ -40,5 +40,6 @@ jobs:
           EXISTS: ${{ steps.check-release.outputs.result }}
         with:
           script: |
-            const script = require('./.github/scripts/comment_on_pr.js');
-            await script({github, context, core});
+            // ES module syntax
+            const { default: comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/comment_on_pr.mjs');
+            await comment_on_pr({github, context, core});
