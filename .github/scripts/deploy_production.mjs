@@ -17,6 +17,7 @@ export const sync_back = async ({ github, context, core }) => {
 
   // Create a PR to sync develop with main after merging a new release
   try {
+    // Create PR
     const { data: pr } = await github.rest.pulls.create({
       owner: context.repo.owner,
       repo: context.repo.repo,
@@ -26,6 +27,15 @@ export const sync_back = async ({ github, context, core }) => {
       body: `This is an automated PR to sync the develop branch with the latest changes from main after the release of version ${version}.`,
     });
     core.info(`Created sync PR: ${pr.html_url}`);
+
+    // Request review
+    await github.rest.pulls.requestReviewers({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: pr.number,
+      reviewers: ["nightwnvol"],
+    });
+    core.info(`Requested review from maintainers`);
   } catch (error) {
     if (error.status === 422 && error.message.includes("No commits between")) {
       core.info("No sync needed - develop is already up to date with main");
