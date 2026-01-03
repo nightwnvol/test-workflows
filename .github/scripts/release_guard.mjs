@@ -1,15 +1,31 @@
-export default async ({ github, context, core }) => {
-  const version = process.env.VERSION;
-  const exists = process.env.EXISTS === "true";
+export const check_release = async ({ github, context, core }) => {
+  const tag = process.env.TAG;
 
-  // Search for existing bot comment
+  // Fetch all releases from the repository
+  const { data: releases } = await github.rest.repos.listReleases({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+  });
+
+  // Check if a release with the given tag already exists
+  const existing_release = releases.find((release) => release.tag_name === tag);
+
+  return existing_release ? true : false;
+};
+
+export const comment_on_pr = async ({ github, context, core }) => {
+  const version = process.env.VERSION;
+  const release_exists = process.env.RELEASE_EXISTS === "true";
+
+  // Fetch all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
     repo: context.repo.repo,
     issue_number: context.issue.number,
   });
 
-  const botComment = comments.find(
+  // Search for existing bot comment
+  const bot_comment = comments.find(
     (comment) =>
       comment.user.type === "Bot" &&
       comment.body.includes("## Release Version Check")
@@ -21,26 +37,27 @@ export default async ({ github, context, core }) => {
             **Version in package.json:** \`${version}\`
 
             ${
-              exists
+              release_exists
                 ? "❌ **ERROR:** A release with this version already exists on GitHub!"
                 : "✅ **SUCCESS:** This version is available for release."
             }
 
             ${
-              exists
+              release_exists
                 ? "**Action required:** Please update the version in package.json before merging."
                 : "You can safely merge this release."
             }
             `;
 
-  if (botComment) {
-    // Delete existing comment
+  // Delete existing bot comment
+  if (bot_comment) {
     await github.rest.issues.deleteComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      comment_id: botComment.id,
+      comment_id: bot_comment.id,
     });
   }
+
   // Create new comment
   await github.rest.issues.createComment({
     owner: context.repo.owner,
@@ -48,9 +65,16 @@ export default async ({ github, context, core }) => {
     issue_number: context.issue.number,
     body: message,
   });
+};
 
-  // Fail if the release already exists
-  if (exists) {
+export const set_check_status = async ({ github, context, core }) => {
+  const version = process.env.VERSION;
+  const release_exists = process.env.RELEASE_EXISTS === "true";
+
+  // Fail the check if the version already exists
+  if (release_exists) {
     core.setFailed(`Version ${version} already exists in releases`);
+  } else {
+    core.info(`Version ${version} is available for release`);
   }
 };
