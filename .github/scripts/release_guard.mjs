@@ -32,13 +32,13 @@ export const comment_on_pr = async ({ github, context, core }) => {
   );
 
   const message = `<!-- Release Guard -->
-  ## Release Guard Report
-  Found version: \`${version}\`
-  ${
-    release_exists
-      ? "❌ A release with this version already exists on GitHub. Please update the version in `package.json` before merging this PR."
-      : "✅ This version is available for release. You can safely merge this PR."
-  }`;
+## Release Guard Report
+Found version: \`${version}\`
+${
+  release_exists
+    ? "❌ A release with this version already exists on GitHub. Please update the version in `package.json` before merging this PR."
+    : "✅ This version is available for release. You can safely merge this PR."
+}`;
 
   // Delete existing bot comment
   if (bot_comment) {
