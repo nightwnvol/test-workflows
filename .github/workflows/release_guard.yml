@@ -9,6 +9,10 @@ permissions:
 jobs:
   release-guard:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.VERSION }}
+      tag: ${{ steps.get-version.outputs.TAG }}
+      release_exists: ${{ steps.check-release.outputs.result }}
     # if:startsWith(github.head_ref, 'release/')
     steps:
       - name: Checkout repository
@@ -40,17 +44,16 @@ jobs:
           script: |
             const { comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core});
-      - name: Fail job if release already exists
-        if: ${{ steps.check-release.outputs.result == 'true' }}
+  check-release-guard:
+    needs: release-guard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set status check conclusion
         run: |
-          echo "A release for version ${{ steps.get-version.outputs.VERSION }} already exists. Failing the job."
-          exit 1
-      # - name: Set check status
-      #   uses: actions/github-script@v8
-      #   env:
-      #     VERSION: ${{ steps.get-version.outputs.VERSION }}
-      #     RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
-      #   with:
-      #     script: |
-      #       const { set_check_status } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
-      #       await set_check_status({github, context, core});
+          if [ "${{ needs.release-guard.outputs.release_exists }}" == "true" ]; then
+            echo "A release for version ${{ needs.release-guard.outputs.version }} already exists. Marking check as failed."
+            exit 1
+          else
+            echo "No existing release for version ${{ needs.release-guard.outputs.version }}. Marking check as successful."
+          fi
