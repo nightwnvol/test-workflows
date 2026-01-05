@@ -40,12 +40,17 @@ jobs:
           script: |
             const { comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core});
-      - name: Set check status
-        uses: actions/github-script@v8
-        env:
-          VERSION: ${{ steps.get-version.outputs.VERSION }}
-          RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
-        with:
-          script: |
-            const { set_check_status } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
-            await set_check_status({github, context, core});
+      - name: Fail job if release already exists
+        if: ${{ steps.check-release.outputs.result == 'true' }}
+        run: |
+          echo "A release for version ${{ steps.get-version.outputs.VERSION }} already exists. Failing the job."
+          exit 1
+      # - name: Set check status
+      #   uses: actions/github-script@v8
+      #   env:
+      #     VERSION: ${{ steps.get-version.outputs.VERSION }}
+      #     RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
+      #   with:
+      #     script: |
+      #       const { set_check_status } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
+      #       await set_check_status({github, context, core});
