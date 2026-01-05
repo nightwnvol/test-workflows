@@ -51,9 +51,11 @@ jobs:
     steps:
       - name: Set status check conclusion
         run: |
-          if [ "${{ needs.release-guard.outputs.release_exists }}" == "true" ]; then
-            echo "A release for version ${{ needs.release-guard.outputs.version }} already exists. Marking check as failed."
-            exit 1
+          # if release-guard is successful and no release exists, mark check as successful
+          if [ "${{ needs.release-guard.result }}" = "success" ] && [ "${{ needs.release-guard.outputs.release_exists }}" = "false" ]; then
+            echo "Release guard passed and no existing release found. Marking check as successful."
+            exit 0
           else
-            echo "No existing release for version ${{ needs.release-guard.outputs.version }}. Marking check as successful."
+            echo "::error::Release guard failed or release already exists. Marking check as failed."
+            exit 1
           fi

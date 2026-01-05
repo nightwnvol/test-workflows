@@ -57,15 +57,3 @@ ${
     body: message,
   });
 };
-
-// export const set_check_status = async ({ github, context, core }) => {
-//   const version = process.env.VERSION;
-//   const release_exists = process.env.RELEASE_EXISTS === "true";
-
-//   // Fail the check if the version already exists
-//   if (release_exists) {
-//     core.setFailed(`Version ${version} already exists in releases`);
-//   } else {
-//     core.info(`Version ${version} is available for release`);
-//   }
-// };
