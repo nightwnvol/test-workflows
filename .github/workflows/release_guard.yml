@@ -15,10 +15,17 @@ jobs:
       release_exists: ${{ steps.check-release.outputs.result }}
     # if:startsWith(github.head_ref, 'release/')
     steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Get package.json version
         id: get-version
         run: |
@@ -31,6 +38,7 @@ jobs:
         env:
           TAG: ${{ steps.get-version.outputs.TAG }}
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { check_release } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             return await check_release({github, context, core});
@@ -41,6 +49,7 @@ jobs:
           VERSION: ${{ steps.get-version.outputs.VERSION }}
           RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core});

@@ -15,10 +15,17 @@ jobs:
       version: ${{ steps.get-version.outputs.VERSION }}
       tag: ${{ steps.get-version.outputs.TAG }}
     steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Get package.json version
         id: get-version
         run: |
@@ -32,6 +39,7 @@ jobs:
           COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         uses: actions/github-script@v8
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { create_release } = await import('${{ github.workspace }}/.github/scripts/deploy_production.mjs');
             await create_release({github, context, core});
@@ -51,15 +59,23 @@ jobs:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: develop
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Sync develop branch with main
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
         uses: actions/github-script@v8
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { sync_back } = await import('${{ github.workspace }}/.github/scripts/deploy_production.mjs');
             await sync_back({github, context, core});
