@@ -15,12 +15,20 @@ jobs:
       release_exists: ${{ steps.check-release.outputs.result }}
     # if:startsWith(github.head_ref, 'release/')
     steps:
+      - name: Debug APP_ID
+        run: |
+          echo "APP_ID length: ${#APP_ID}"
+          echo "First 3 chars: ${APP_ID:0:3}"
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
