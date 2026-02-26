@@ -15,10 +15,25 @@ jobs:
       release_exists: ${{ steps.check-release.outputs.result }}
     # if:startsWith(github.head_ref, 'release/')
     steps:
+      - name: Debug APP_ID
+        run: |
+          echo "APP_ID length: ${#APP_ID}"
+          echo "First 3 chars: ${APP_ID:0:3}"
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+          token: ${{ steps.generate-token.outputs.token }}
       - name: Get package.json version
         id: get-version
         run: |
@@ -31,6 +46,7 @@ jobs:
         env:
           TAG: ${{ steps.get-version.outputs.TAG }}
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { check_release } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             return await check_release({github, context, core});
@@ -41,6 +57,7 @@ jobs:
           VERSION: ${{ steps.get-version.outputs.VERSION }}
           RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
         with:
+          github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core});
