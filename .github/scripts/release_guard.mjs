@@ -15,7 +15,9 @@ export const check_release = async ({ github, context, core, tag }) => {
 
 export const comment_on_pr = async ({ github, context, core, version, release_exists }) => {
   // Sanitize version to prevent markdown injection
-  // const sanitized_version = version.replace(/[`<>]/g, '');
+  const sanitized_version = version.replace(/[`<>]/g, '');
+  core.info(`Sanitized version for comment: ${sanitized_version}`);
+  core.info(`Release exists: ${release_exists}`);
 
   // Fetch all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
