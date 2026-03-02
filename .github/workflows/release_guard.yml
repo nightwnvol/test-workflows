@@ -55,13 +55,9 @@ jobs:
     steps:
       - name: Set status check conclusion
         env:
-          RELEASE_GUARD_RESULT: ${{ needs.release-guard.result }}
-          RELEASE_EXISTS: ${{ needs.release-guard.outputs.release_exists }}
         run: |
           # if release-guard is successful and no release exists, mark check as successful
-          echo "Release guard result: ${RELEASE_GUARD_RESULT}"
-          echo "Release exists: ${RELEASE_EXISTS}"
-          if [ "${RELEASE_GUARD_RESULT}" = "success" ] && [ "${RELEASE_EXISTS}" = "false" ]; then
+          if [ "${{ needs.release-guard.result }}" = "success" ] && [ "${{ needs.release-guard.outputs.release_exists }}" = "false" ]; then
             echo "Release guard passed and no existing release found. Marking check as successful."
             exit 0
           else
