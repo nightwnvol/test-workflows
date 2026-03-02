@@ -7,6 +7,8 @@ export const check_release = async ({ github, context, core, tag }) => {
 
   // Check if a release with the given tag already exists
   const existing_release = releases.find((release) => release.tag_name === tag);
+  core.info(`Checking for existing release with tag: ${tag}`);
+  core.info(`Existing release found: ${existing_release ? "Yes" : "No"}`);
 
   return existing_release ? true : false;
 };
