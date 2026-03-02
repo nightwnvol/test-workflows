@@ -16,5 +16,6 @@ export const get_pr_package_version = async ({ github, context, core }) => {
     throw new Error('Invalid version format');
   }
   
+  core.info(`Extracted version from package.json: ${version}`);
   return version;
 };

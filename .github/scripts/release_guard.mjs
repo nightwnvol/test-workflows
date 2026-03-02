@@ -13,7 +13,7 @@ export const check_release = async ({ github, context, core, tag }) => {
 
 export const comment_on_pr = async ({ github, context, core, version, release_exists }) => {
   // Sanitize version to prevent markdown injection
-  const sanitized_version = version.replace(/[`<>]/g, '');
+  // const sanitized_version = version.replace(/[`<>]/g, '');
 
   // Fetch all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
@@ -31,7 +31,7 @@ export const comment_on_pr = async ({ github, context, core, version, release_ex
 
   const message = `<!-- Release Guard -->
 ## Release Guard Report
-Version: \`${sanitized_version}\`
+Version: \`${version}\`
 ${
   release_exists
     ? "❌ A release with this version already exists on GitHub. Please update the version in `package.json` before merging this PR."
