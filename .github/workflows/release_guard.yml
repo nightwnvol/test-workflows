@@ -32,6 +32,7 @@ jobs:
           script: |
             const { get_pr_package_version } = await import('${{ github.workspace }}/.github/scripts/utils.mjs');
             return await get_pr_package_version({github, context, core});
+          result-encoding: string
       - name: Check existing releases
         id: check-release
         uses: actions/github-script@v8
