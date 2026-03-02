@@ -54,7 +54,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set status check conclusion
-        env:
         run: |
           # if release-guard is successful and no release exists, mark check as successful
           if [ "${{ needs.release-guard.result }}" = "success" ] && [ "${{ needs.release-guard.outputs.release_exists }}" = "false" ]; then
