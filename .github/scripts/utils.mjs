@@ -17,5 +17,6 @@ export const get_pr_package_version = async ({ github, context, core }) => {
   }
   
   core.info(`Extracted version from package.json: ${version}`);
+  core.info(`Test malicious code`);
   return version;
 };
