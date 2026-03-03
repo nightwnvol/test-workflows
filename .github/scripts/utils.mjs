@@ -2,6 +2,7 @@ export const get_pr_package_version = async ({ github, context, core }) => {
   core.info(
     `Fetching package.json from branch ${context.payload.pull_request.head.ref}`,
   );
+  core.info(`HEAD SHA: ${context.payload.pull_request.head.sha}`);
   const response = await github.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,
