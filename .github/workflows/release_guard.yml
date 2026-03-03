@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
-        with:
-          ref: main
+        # with:
+        #   ref: main
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
