@@ -13,12 +13,17 @@ export const check_release = async ({ github, context, core, tag }) => {
   return existing_release ? true : false;
 };
 
-export const comment_on_pr = async ({ github, context, core, version, release_exists }) => {
+export const comment_on_pr = async ({
+  github,
+  context,
+  core,
+  version,
+  release_exists,
+}) => {
   // Sanitize version to prevent markdown injection
-  const sanitized_version = version.replace(/[`<>]/g, '');
-  const release_exists_bool = release_exists === "true";
+  const sanitized_version = version.replace(/[`<>]/g, "");
   core.info(`Sanitized version for comment: ${sanitized_version}`);
-  core.info(`Release exists: ${release_exists_bool}`);
+  core.info(`Release exists: ${release_exists}`);
 
   // Fetch all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
@@ -31,14 +36,14 @@ export const comment_on_pr = async ({ github, context, core, version, release_ex
   const bot_comment = comments.find(
     (comment) =>
       comment.user.type === "Bot" &&
-      comment.body.includes("<!-- Release Guard -->")
+      comment.body.includes("<!-- Release Guard -->"),
   );
 
   const message = `<!-- Release Guard -->
 ## Release Guard Report
 Version: \`${version}\`
 ${
-  release_exists_bool
+  release_exists
     ? "❌ A release with this version already exists on GitHub. Please update the version in `package.json` before merging this PR."
     : "✅ This version is available for release. You can safely merge this PR."
 }`;
