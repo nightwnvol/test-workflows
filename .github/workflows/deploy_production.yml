@@ -49,7 +49,7 @@ jobs:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.create-release.outputs.tag }}
@@ -61,7 +61,7 @@ jobs:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v4
         # with:
         #   ref: develop
