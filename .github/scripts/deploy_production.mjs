@@ -5,8 +5,10 @@ export const create_release = async ({
   tag,
   commit_sha,
 }) => {
-  core.info(`Creating new release with tag ${tag} for commit ${commit_sha}...`);
-  core.info(`Ref branch: ${context.ref}`);
+  core.info(
+    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
+  );
+  core.info(`Creating new release with tag ${tag} for commit ${commit_sha}`);
 
   // Create a new release on GitHub
   await github.rest.repos.createRelease({
@@ -26,8 +28,10 @@ export const sync_back = async ({
   version,
   reviewers,
 }) => {
-  core.info(`Syncing develop branch with main after release ${version}...`);
-  core.info(`Ref branch: ${context.ref}`);
+  core.info(
+    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
+  );
+  core.info(`Syncing develop branch with main after release ${version}`);
 
   // Create a PR to sync develop with main after merging a new release
   try {

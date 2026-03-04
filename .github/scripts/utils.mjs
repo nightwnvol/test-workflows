@@ -4,8 +4,10 @@ export const get_pr_package_version = async ({
   core,
   ref,
 }) => {
+  core.info(
+    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
+  );
   core.info(`Fetching package.json from branch ${ref}`);
-  core.info(`Ref branch: ${context.ref}`);
 
   const response = await github.rest.repos.getContent({
     owner: context.repo.owner,
