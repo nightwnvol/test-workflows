@@ -8,7 +8,7 @@ jobs:
     if: contains(github.event.head_commit.message, '(deploy-preview)')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout release branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
@@ -20,10 +20,12 @@ jobs:
     needs: deploy-preview
     if: always()
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_PREVIEW_RESULT: ${{ needs.deploy-preview.result }}
     steps:
       - name: Notify deployment status
         run: |
-          if [ "${{ needs.deploy-preview.result }}" = "success" ]; then
+          if [ "${DEPLOY_PREVIEW_RESULT}" = "success" ]; then
             echo "Preview deployment succeeded. Marking check as successful."
             exit 0
           else
