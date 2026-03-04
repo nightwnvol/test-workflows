@@ -12,9 +12,12 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get-version.outputs.VERSION }}
-      tag: ${{ steps.get-version.outputs.TAG }}
+      version: ${{ steps.get-version.outputs.result }}
     steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
@@ -23,44 +26,45 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          token: ${{ steps.generate-token.outputs.token }}
-      - name: Get package.json version
+      - name: Get package.json version from main branch
         id: get-version
-        run: |
-          VERSION=$(jq -r .version package.json)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { get_pr_package_version } = await import('${{ github.workspace }}/.github/scripts/utils.mjs');
+            return await get_pr_package_version({github, context, core, ref: 'main'});
+          result-encoding: string
       - name: Create new release
         id: create-release
         env:
-          TAG: ${{ steps.get-version.outputs.TAG }}
+          TAG: v${{ steps.get-version.outputs.result }}
           COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { create_release } = await import('${{ github.workspace }}/.github/scripts/deploy_production.mjs');
-            await create_release({github, context, core});
+            await create_release({github, context, core, tag: process.env.TAG, commit_sha: process.env.COMMIT_SHA});
   deploy-production:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.create-release.outputs.tag }}
+          ref: main
       - name: Deploy to production
         run: |
-          echo "Deploying version ${{ needs.create-release.outputs.version }} to production"
+          echo "Deploying to production environment for ref ${{ github.ref }}"
           echo "Deployed successfully!"
   sync-back:
     needs: create-release
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
@@ -69,11 +73,6 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: develop
-          token: ${{ steps.generate-token.outputs.token }}
       - name: Sync develop branch with main
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
@@ -82,4 +81,4 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { sync_back } = await import('${{ github.workspace }}/.github/scripts/deploy_production.mjs');
-            await sync_back({github, context, core});
+            await sync_back({github, context, core, version: process.env.VERSION}, reviewers: ["nightwnvol"]});
