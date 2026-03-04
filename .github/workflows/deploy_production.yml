@@ -81,4 +81,4 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { sync_back } = await import('${{ github.workspace }}/.github/scripts/deploy_production.mjs');
-            await sync_back({github, context, core, version: process.env.VERSION}, reviewers: ["nightwnvol"]});
+            await sync_back({github, context, core, version: process.env.VERSION, reviewers: ["nightwnvol"]});
