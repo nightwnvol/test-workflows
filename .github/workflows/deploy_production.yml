@@ -52,7 +52,7 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.create-release.outputs.tag }}
+          ref: main
       - name: Deploy to production
         run: |
           echo "Deploying to production environment for ref ${{ github.ref }}"
@@ -63,8 +63,8 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
-        # with:
-        #   ref: develop
+        with:
+          ref: main
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2

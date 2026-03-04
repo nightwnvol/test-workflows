@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout release branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Deploy to preview
         run: |
           echo "Deploying to preview environment for ref ${{ github.ref }}"
