@@ -1,6 +1,8 @@
 export const check_release = async ({ github, context, core, tag }) => {
-  core.info(`Checking if release with tag ${tag} already exists...`);
-  core.info(`Ref branch: ${context.ref}`);
+  core.info(
+    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
+  );
+  core.info(`Checking if release with tag ${tag} already exists`);
 
   // Fetch all releases from the repository
   const { data: releases } = await github.rest.repos.listReleases({
@@ -24,9 +26,9 @@ export const comment_on_pr = async ({
   release_exists,
 }) => {
   core.info(
-    `Commenting on PR #${context.issue.number} about release status...`,
+    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
   );
-  core.info(`Ref branch: ${context.ref}`);
+  core.info(`Commenting on PR #${context.issue.number} about release status`);
 
   // Sanitize version to prevent markdown injection
   const sanitized_version = version.replace(/[`<>]/g, "");
