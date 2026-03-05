@@ -15,8 +15,8 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
-        with:
-          ref: main
+        # with:
+        #   ref: main
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
@@ -26,13 +26,33 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
       - name: Get package.json version from release branch
-        id: get-version
+        id: get-version-package
         uses: actions/github-script@v8
         with:
           script: |
             const { get_pr_package_version } = await import('${{ github.workspace }}/.github/scripts/utils.mjs');
             return await get_pr_package_version({github, context, core, ref: context.payload.pull_request.head.ref});
           result-encoding: string
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: 3.12
+      - name: Get pyproject.toml version from release branch
+        id: get-version-pyproject
+        run: |
+          echo "result=$(uv version --short)" >> $GITHUB_OUTPUT
+      - name: Check version consistency
+        id: get-version
+        env:
+          VERSION_PACKAGE: ${{ steps.get-version-package.outputs.result }}
+          VERSION_PYPROJECT: ${{ steps.get-version-pyproject.outputs.result }}
+        run: |
+          if [ "${VERSION_PACKAGE}" != "${VERSION_PYPROJECT}" ]; then
+            echo "::error::Version mismatch between package.json (${VERSION_PACKAGE}) and pyproject.toml (${VERSION_PYPROJECT})."
+            exit 1
+          fi
+          echo "Version is consistent: ${VERSION_PACKAGE}"
+          echo "result=${VERSION_PACKAGE}" >> $GITHUB_OUTPUT
       - name: Check existing releases
         id: check-release
         uses: actions/github-script@v8
