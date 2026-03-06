@@ -52,16 +52,6 @@ jobs:
           fi
           echo "Version is consistent: ${VERSION_PACKAGE}"
           echo "result=${VERSION_PACKAGE}" >> $GITHUB_OUTPUT
-      # - name: Check existing releases
-      #   id: check-release
-      #   uses: actions/github-script@v8
-      #   env:
-      #     TAG: v${{ steps.get-version.outputs.result }}
-      #   with:
-      #     script: |
-      #       const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
-      #       return await check_release({github, context, core, tag: process.env.TAG});
-      #     result-encoding: string
       - name: Check existing release
         id: check-release
         env:
@@ -69,8 +59,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking for existing release with tag ${TAG}"
-          echo gh release view ${TAG} --repo ${{ github.repository }}
-          gh release view ${TAG} --repo ${{ github.repository }}
           if gh release view ${TAG} --repo ${{ github.repository }} >/dev/null 2>&1; then
             echo "Release with tag ${TAG} already exists."
             echo "result=true" >> $GITHUB_OUTPUT
@@ -86,16 +74,49 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
+      # - name: Comment on PR
+      #   uses: actions/github-script@v8
+      #   env:
+      #     VERSION: ${{ steps.get-version.outputs.result }}
+      #     RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
+      #   with:
+      #     github-token: ${{ steps.generate-token.outputs.token }}
+      #     script: |
+      #       const { comment_on_pr } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
+      #       await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true'});
       - name: Comment on PR
-        uses: actions/github-script@v8
         env:
           VERSION: ${{ steps.get-version.outputs.result }}
           RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
-        with:
-          github-token: ${{ steps.generate-token.outputs.token }}
-          script: |
-            const { comment_on_pr } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
-            await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true'});
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Prepare the message
+          if [ "$RELEASE_EXISTS" = "true" ]; then
+            MESSAGE="<!-- Release Guard -->
+          ## Release Guard Report
+          Version: \`${VERSION}\`
+          ❌ A release with this version already exists on GitHub. Please update the version in \`package.json\` before merging this PR."
+          else
+            MESSAGE="<!-- Release Guard -->
+          ## Release Guard Report
+          Version: \`${VERSION}\`
+          ✅ This version is available for release. You can safely merge this PR."
+          fi
+          
+          # Check for existing comment
+          COMMENT_ID=$(gh api repos/${{ github.repository }}/issues/${PR_NUMBER}/comments \
+            --jq '.[] | select(.user.type == "Bot" and (.body | contains("<!-- Release Guard -->"))) | .id' \
+            | head -n 1)
+          
+          # Delete existing comment
+          if [ -n "$COMMENT_ID" ]; then
+            echo "Deleting existing comment ID: $COMMENT_ID"
+            gh api -X DELETE repos/${{ github.repository }}/issues/comments/$COMMENT_ID
+          fi
+          
+          # Create new comment
+          echo "$MESSAGE" | gh pr comment ${PR_NUMBER} --repo ${{ github.repository }} --body-file -
   check-release-guard:
     needs: release-guard
     if: always()
