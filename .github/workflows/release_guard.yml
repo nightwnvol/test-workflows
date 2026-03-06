@@ -68,7 +68,7 @@ jobs:
           TAG: v${{ steps.get-version.outputs.result }}
         run: |
           echo "Checking for existing release with tag ${TAG}"
-          if gh release view ${TAG} --repo ${{ github.repository }} >/dev/null 2>&1; then
+          if gh release view ${TAG} --repo ${{ github.repository_owner }}/${{ github.event.repository.name }} >/dev/null 2>&1; then
             echo "Release with tag ${TAG} already exists."
             echo "result=true" >> $GITHUB_OUTPUT
           else
