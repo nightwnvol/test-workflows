@@ -1,7 +1,5 @@
 export const check_release = async ({ github, context, core, tag }) => {
-  core.info(
-    `Script fetched from branch ${context.payload.pull_request.head.ref}`,
-  );
+  core.info(`Script fetched from branch ${context.head_ref}`);
   // List all releases
   const { data: releases } = await github.rest.repos.listReleases({
     owner: context.repo.owner,
@@ -22,9 +20,7 @@ export const comment_on_pr = async ({
   version,
   release_exists,
 }) => {
-  core.info(
-    `Script fetched from branch ${context.payload.pull_request.head.ref}`,
-  );
+  core.info(`Script fetched from branch ${context.head_ref}`);
   // List all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
@@ -47,6 +43,7 @@ ${
     : "✅ This version is available for release. You can safely merge this PR."
 }`;
   core.info(`${message}`);
+  core.info("ciao ciao");
   // Delete existing bot comment
   if (bot_comment) {
     await github.rest.issues.deleteComment({
