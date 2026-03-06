@@ -5,12 +5,7 @@ export const create_release = async ({
   tag,
   commit_sha,
 }) => {
-  core.info(
-    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
-  );
-  core.info(`Creating new release with tag ${tag} for commit ${commit_sha}`);
-
-  // Create a new release on GitHub
+  // Create a new release
   await github.rest.repos.createRelease({
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -19,6 +14,7 @@ export const create_release = async ({
     target_commitish: commit_sha,
     generate_release_notes: true,
   });
+  core.info(`Created release with tag ${tag} targeting commit ${commit_sha}`);
 };
 
 export const sync_back = async ({
@@ -28,11 +24,6 @@ export const sync_back = async ({
   version,
   reviewers,
 }) => {
-  core.info(
-    `Script fetched from branch ${context.payload.pull_request.base.ref}`,
-  );
-  core.info(`Syncing develop branch with main after release ${version}`);
-
   // Create a PR to sync develop with main after merging a new release
   try {
     // Create PR
@@ -45,7 +36,6 @@ export const sync_back = async ({
       body: `This is an automated PR to sync the develop branch with the latest changes from main after the release of version ${version}.`,
     });
     core.info(`Created sync PR at ${pr.html_url}`);
-
     // Request review
     await github.rest.pulls.requestReviewers({
       owner: context.repo.owner,
@@ -61,4 +51,5 @@ export const sync_back = async ({
       throw error;
     }
   }
+  core.info(`Develop branch is now in sync with main after release ${version}`);
 };
