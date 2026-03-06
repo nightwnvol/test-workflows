@@ -60,7 +60,7 @@ jobs:
         with:
           script: |
             const { check_release } = await import('${{ github.workspace }}/pr/.github/scripts/release_guard.mjs');
-            return await check_release({github, context, core, tag: process.env.TAG});
+            return await check_release({github, context, core, tag: process.env.TAG, source_branch: '${{ github.head_ref }}'});
           result-encoding: string
       - name: Generate GitHub App token
         id: generate-token
@@ -79,7 +79,7 @@ jobs:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
             const { comment_on_pr } = await import('${{ github.workspace }}/pr/.github/scripts/release_guard.mjs');
-            await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true'});
+            await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true', source_branch: '${{ github.head_ref }}'});
   check-release-guard:
     needs: release-guard
     if: always()
