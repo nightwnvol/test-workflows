@@ -66,6 +66,7 @@ jobs:
         id: check-release
         env:
           TAG: v${{ steps.get-version.outputs.result }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking for existing release with tag ${TAG}"
           echo gh release view ${TAG} --repo ${{ github.repository }}
