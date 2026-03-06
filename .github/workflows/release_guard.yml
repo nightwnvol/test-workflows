@@ -15,24 +15,22 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v4
-        # with:
-        #   ref: main
-      - name: Generate GitHub App token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
+          ref: main
+          path: main
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          path: pr
+      - name: Check branches
+        run: |
+          ls -la
       - name: Get package.json version from release branch
         id: get-version-package
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const { get_pr_package_version } = await import('${{ github.workspace }}/.github/scripts/utils.mjs');
-            return await get_pr_package_version({github, context, core, ref: context.payload.pull_request.head.ref});
-          result-encoding: string
+        run: |
+          cd pr
+          echo "result=$(npm pkg get version | jq -r .)" >> $GITHUB_OUTPUT
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -40,6 +38,7 @@ jobs:
       - name: Get pyproject.toml version from release branch
         id: get-version-pyproject
         run: |
+          cd pr
           echo "result=$(uv version --short)" >> $GITHUB_OUTPUT
       - name: Check version consistency
         id: get-version
@@ -60,9 +59,17 @@ jobs:
           TAG: v${{ steps.get-version.outputs.result }}
         with:
           script: |
-            const { check_release } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
+            const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
             return await check_release({github, context, core, tag: process.env.TAG});
           result-encoding: string
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
       - name: Comment on PR
         uses: actions/github-script@v8
         env:
@@ -71,7 +78,7 @@ jobs:
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const { comment_on_pr } = await import('${{ github.workspace }}/.github/scripts/release_guard.mjs');
+            const { comment_on_pr } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true'});
   check-release-guard:
     needs: release-guard
