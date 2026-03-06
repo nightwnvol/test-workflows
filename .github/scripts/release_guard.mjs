@@ -1,5 +1,11 @@
-export const check_release = async ({ github, context, core, tag }) => {
-  core.info(`Script fetched from branch ${context.head_ref}`);
+export const check_release = async ({
+  github,
+  context,
+  core,
+  tag,
+  source_branch = "main",
+}) => {
+  core.info(`Script fetched from branch ${source_branch}`);
   // List all releases
   const { data: releases } = await github.rest.repos.listReleases({
     owner: context.repo.owner,
@@ -19,8 +25,9 @@ export const comment_on_pr = async ({
   core,
   version,
   release_exists,
+  source_branch = "main",
 }) => {
-  core.info(`Script fetched from branch ${context.head_ref}`);
+  core.info(`Script fetched from branch ${source_branch}`);
   // List all comments on the PR
   const { data: comments } = await github.rest.issues.listComments({
     owner: context.repo.owner,
