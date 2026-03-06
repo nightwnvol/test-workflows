@@ -52,16 +52,29 @@ jobs:
           fi
           echo "Version is consistent: ${VERSION_PACKAGE}"
           echo "result=${VERSION_PACKAGE}" >> $GITHUB_OUTPUT
-      - name: Check existing releases
+      # - name: Check existing releases
+      #   id: check-release
+      #   uses: actions/github-script@v8
+      #   env:
+      #     TAG: v${{ steps.get-version.outputs.result }}
+      #   with:
+      #     script: |
+      #       const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
+      #       return await check_release({github, context, core, tag: process.env.TAG});
+      #     result-encoding: string
+      - name: Check existing release
         id: check-release
-        uses: actions/github-script@v8
         env:
           TAG: v${{ steps.get-version.outputs.result }}
-        with:
-          script: |
-            const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
-            return await check_release({github, context, core, tag: process.env.TAG});
-          result-encoding: string
+        run: |
+          echo "Checking for existing release with tag ${TAG}"
+          if gh release view ${TAG} --repo ${{ github.repository }} >/dev/null 2>&1; then
+            echo "Release with tag ${TAG} already exists."
+            echo "result=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing release with tag ${TAG} found."
+            echo "result=false" >> $GITHUB_OUTPUT
+          fi
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
