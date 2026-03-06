@@ -59,7 +59,7 @@ jobs:
           TAG: v${{ steps.get-version.outputs.result }}
         with:
           script: |
-            const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
+            const { check_release } = await import('${{ github.workspace }}/pr/.github/scripts/release_guard.mjs');
             return await check_release({github, context, core, tag: process.env.TAG});
           result-encoding: string
       - name: Generate GitHub App token
@@ -78,7 +78,7 @@ jobs:
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
-            const { comment_on_pr } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
+            const { comment_on_pr } = await import('${{ github.workspace }}/pr/.github/scripts/release_guard.mjs');
             await comment_on_pr({github, context, core, version: process.env.VERSION, release_exists: process.env.RELEASE_EXISTS === 'true'});
   check-release-guard:
     needs: release-guard
