@@ -76,7 +76,7 @@ jobs:
         env:
           VERSION: ${{ steps.get-version.outputs.result }}
           RELEASE_EXISTS: ${{ steps.check-release.outputs.result }}
-          PATH: pr
+          SOURCE_PATH: pr
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
