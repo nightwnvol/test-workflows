@@ -84,7 +84,11 @@ jobs:
           else
             STATUS="✅ This version is available for release. You can safely merge this PR."
           fi
-          printf result="<!-- Release Guard -->\n## Release Guard Report\nVersion: \`${VERSION}\`\n${STATUS}" >> $GITHUB_OUTPUT
+          {
+            echo "result<<EOF"
+            printf "<!-- Release Guard -->\n## Release Guard Report\nVersion: \`${VERSION}\`\n${STATUS}\n"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@v5
         with:
