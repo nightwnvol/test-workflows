@@ -13,11 +13,6 @@ jobs:
       release_exists: ${{ steps.check-release.outputs.result }}
     # if:startsWith(github.head_ref, 'release/')
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: main
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
@@ -51,14 +46,15 @@ jobs:
           echo "result=${VERSION_PACKAGE}" >> $GITHUB_OUTPUT
       - name: Check existing release
         id: check-release
-        uses: actions/github-script@v8
         env:
+          GH_TOKEN: ${{ github.token }}
           TAG: v${{ steps.get-version.outputs.result }}
-        with:
-          script: |
-            const { check_release } = await import('${{ github.workspace }}/main/.github/scripts/release_guard.mjs');
-            return await check_release({github, context, core, tag: process.env.TAG});
-          result-encoding: string
+        run: |
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "result=true" >> $GITHUB_OUTPUT
+          else
+            echo "result=false" >> $GITHUB_OUTPUT
+          fi
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
