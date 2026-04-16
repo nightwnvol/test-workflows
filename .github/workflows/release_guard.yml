@@ -84,18 +84,14 @@ jobs:
           else
             STATUS="✅ This version is available for release. You can safely merge this PR."
           fi
-          {
-            echo 'body<<EOF'
-            printf "<!-- Release Guard -->\n## Release Guard Report\nVersion: \`%s\`\n%s" "${VERSION}" "${STATUS}"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+          printf "<!-- Release Guard -->\n## Release Guard Report\nVersion: \`${VERSION}\`\n${STATUS}" >> $GITHUB_OUTPUT
       - name: Create or update comment
         uses: peter-evans/create-or-update-comment@v5
         with:
           token: ${{ steps.generate-token.outputs.token }}
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.prepare-body.outputs.body }}
+          body: ${{ steps.prepare-body.outputs.result }}
           edit-mode: replace
   check-release-guard:
     needs: release-guard
