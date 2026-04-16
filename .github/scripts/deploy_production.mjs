@@ -1,22 +1,3 @@
-export const create_release = async ({
-  github,
-  context,
-  core,
-  tag,
-  commit_sha,
-}) => {
-  // Create a new release
-  await github.rest.repos.createRelease({
-    owner: context.repo.owner,
-    repo: context.repo.repo,
-    tag_name: tag,
-    name: tag,
-    target_commitish: commit_sha,
-    generate_release_notes: true,
-  });
-  core.info(`Created release with tag ${tag} targeting commit ${commit_sha}`);
-};
-
 export const sync_back = async ({
   github,
   context,
