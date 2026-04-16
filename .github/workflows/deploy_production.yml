@@ -103,11 +103,24 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
       - name: Sync develop branch with main
+        working-directory: main
         env:
           VERSION: ${{ needs.create-release.outputs.version }}
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ steps.generate-token.outputs.token }}
-          script: |
-            const { sync_back } = await import('${{ github.workspace }}/main/.github/scripts/deploy_production.mjs');
-            await sync_back({github, context, core, version: process.env.VERSION, reviewers: ["nightwnvol"]});
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          if ! output=$(gh pr create \
+            --title "maint: sync develop with main after release $VERSION" \
+            --body "This is an automated PR to sync the develop branch with the latest changes from main after the release of version $VERSION." \
+            --head main \
+            --base develop \
+            --reviewer nightwnvol 2>&1); then
+            if echo "$output" | grep -q "No commits between"; then
+              echo "No sync needed: develop is already up to date with main"
+            else
+              echo "$output"
+              exit 1
+            fi
+          else
+            echo "$output"
+          fi
+          echo "Develop branch is now in sync with main after release $VERSION"
