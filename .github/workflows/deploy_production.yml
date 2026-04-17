@@ -4,13 +4,16 @@ on:
     types: [closed]
     branches:
       - main
-permissions:
-  contents: write
-  pull-requests: write
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 jobs:
   create-release:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     outputs:
       version: ${{ steps.get-version.outputs.result }}
     steps:
@@ -24,9 +27,6 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           path: pr
-      - name: Check branches
-        run: |
-          ls -la
       - name: Get package.json version from release branch
         id: get-version-package
         run: |
@@ -75,7 +75,10 @@ jobs:
             --title "$TAG"
   deploy-production:
     needs: create-release
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout main branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -87,7 +90,11 @@ jobs:
           echo "Deployed successfully!"
   sync-back:
     needs: create-release
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout main branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
