@@ -1,5 +1,5 @@
 [project]
 name = "test-app"
-version = "25.3.0"
+version = "25.4.0"
 description = "Add your description here"
 requires-python = ">=3.12"
