@@ -1,20 +1,28 @@
 name: Deploy to preview
 on:
-  push:
+  pull_request:
+    types: [labeled]
     branches:
-      - "release/**"
+      - main
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 jobs:
   deploy-preview:
-    if: contains(github.event.head_commit.message, '(deploy-preview)')
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'deploy-preview') &&
+      startsWith(github.head_ref, 'release/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout release branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.head_ref }}
       - name: Deploy to preview
+        env:
+          REF: ${{ github.head_ref }}
         run: |
-          echo "Deploying to preview environment for ref ${{ github.ref }}"
+          echo "Deploying to preview environment for ref ${REF}"
           echo "Deployed successfully!"
   check-deploy-preview:
     needs: deploy-preview
@@ -25,10 +33,10 @@ jobs:
     steps:
       - name: Notify deployment status
         run: |
-          if [ "${DEPLOY_PREVIEW_RESULT}" = "success" ]; then
-            echo "Preview deployment succeeded. Marking check as successful."
+          if [ "${DEPLOY_PREVIEW_RESULT}" = "success" ] || [ "${DEPLOY_PREVIEW_RESULT}" = "skipped" ]; then
+            echo "Preview deployment succeeded or was not requested. Marking check as successful."
             exit 0
           else
-            echo "::error::Preview deployment failed or skipped. Marking check as failed."
+            echo "::error::Preview deployment failed. Marking check as failed."
             exit 1
           fi
