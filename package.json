@@ -1,7 +1,7 @@
 {
   "name": "test-merges",
   "private": true,
-  "version": "25.4.0",
+  "version": "25.4.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
